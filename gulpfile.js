@@ -6,7 +6,7 @@ var browserSync = require('browser-sync');
 var autoprefixer = require('gulp-autoprefixer');
 var runSequence = require('run-sequence');
 var uglify = require('gulp-uglify');
-var minifyCSS = require('gulp-minify-css');
+var cleanCSS = require('gulp-clean-css');
 var useref = require('gulp-useref');
 var gulpIf = require('gulp-if');
 var del = require('del');
@@ -95,7 +95,7 @@ gulp.task('css', function() {
   return gulp.src(paths.styles.src + '*.scss')
     .pipe(sass({ style: 'expanded', })) // Type: String Default: nested Values: nested, expanded, compact, compressed
     .pipe(autoprefixer(AUTOPREFIXER_BROWSERS))    
-    .pipe(minifyCSS())
+    .pipe(cleanCSS())
     .pipe(gulp.dest(paths.styles.dest))
 });
 
