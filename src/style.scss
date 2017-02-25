@@ -1,7 +1,13 @@
 $color-text: #ff0000;
 
-html, body {
-	font-size: 30px;
-	line-height: 30px;
-	color: $color-text;
+html, body { margin: 0; padding: 0; overflow: hidden; }
+
+.hidden {display: none;}
+
+#scene {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #efefef;
 }

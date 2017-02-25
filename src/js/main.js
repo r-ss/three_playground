@@ -191,236 +191,55 @@ function createLights() {
 // 	});
 // }
 
-
-
 var loadModel = function() {
   //Manager from ThreeJs to track a loader and its status
-  var loadingManager = new THREE.LoadingManager();
-
-
-// instantiate a loader
-var loader = new THREE.JSONLoader();
-
-
-var scale = 50.0;
-
-var model = [
-	'models/knight.json'
-];
-
-
-var knightMaterial = new THREE.ShaderMaterial({
-                    uniforms: {
-                       tMatCap: {
-                            type: 't',
-                            value: THREE.ImageUtils.loadTexture('models/map.jpg')
-                        },
-                        time: {
-                            type: 'f',
-                            value: 0
-                        },
-                        bump: {
-                            type: 'f',
-                            value: 0
-                        },
-                        noise: {
-                            type: 'f',
-                            value: .04
-                        },
-                        useNormal: {
-                            type: 'f',
-                            value: 0
-                        },
-                        normalScale: {
-                            type: 'f',
-                            value: .5
-                        },
-                        normalRepeat: {
-                            type: 'f',
-                            value: 1
-                        }
-                   }
-               })
-
-loader.load('models/knight.json', function ( geometry, materials ) {
-	var object = new THREE.Mesh( geometry, knightMaterial );
-
-	object.scale.set(scale,scale,scale);
-	object.position.z = -30;
-	object.position.x = -24;
-
-	scene.add( object );
-});
-
-
-
-  //   model.traverse(function(child) {
-  //     //This allow us to check if the children is an instance of the Mesh constructor
-  //     if (child instanceof THREE.Mesh) {
-
-  //     	child.material = baseMaterial;
-  //     	//child.material.color = new THREE.Color( randomColor() );
-  //     	//child.material.wireframe = true;
-
-  //     	//console.log(child.name)
-
-  //     	if(child.name == 'body'){
-		// 	//console.log('found body');
-			
-		// 	child.material = bodyMaterial;
-		// 	//child.material.transparent = true,
-		// 	//child.material.opacity = 0.5;
-		// 	//child.material.wireframe = true;
-
-		// 	//console.log(child);
-
-		// }
-
-  //     }
-  //   });
-
-
-};
-
-
-
-
-var loadMercedes = function() {
-  //Manager from ThreeJs to track a loader and its status
-  var loadingManager = new THREE.LoadingManager();
+  //var manager = new THREE.LoadingManager();
   //Loader for Obj from Three.js
   //var objLoader = new THREE.OBJLoader(manager);
-  //var textureLoader = new THREE.TextureLoader(loadingManager);
+  //var textureLoader = new THREE.TextureLoader(manager);
+
+  //var texture = textureLoader.load('models/pony-cartoon/model.jpg');
+  //texture.wrapS = texture.wrapT = THREE.RepeatWrapping; // CHANGED
+  //texture.offset.set( 29 / 100, 48 / 100); // CHANGED
+  //texture.repeat.set( 1, 7 ); // CHANGED
 
 
 
-    //model.material = baseMaterial;
-    //model.material.color = new THREE.Color( randomColor() )
 
- 	//model.material = baseMaterial;
+var onProgress = function ( xhr ) {
+	if ( xhr.lengthComputable ) {
+		var percentComplete = xhr.loaded / xhr.total * 100;
+		console.log( Math.round(percentComplete, 2) + '% downloaded' );
+	}
+};
 
+var onError = function ( xhr ) { };
 
-// instantiate a loader
-var loader = new THREE.JSONLoader();
+THREE.Loader.Handlers.add( /\.dds$/i, new THREE.DDSLoader() );
 
+var mtlLoader = new THREE.MTLLoader();
+mtlLoader.setPath( 'models/pony-cartoon/source/' );
+mtlLoader.load( 'Pony_cartoon.mtl', function( materials ) {
 
-var scale = 0.25;
+	//materials.preload();
 
-var models = [
-	'models/Mercedes/garage.mb_body.js',
-	'models/Mercedes/garage.mb_chrome.js',
-	'models/Mercedes/garage.mb_glass.js',
-	'models/Mercedes/garage.mb_black.js',
-	'models/Mercedes/garage.mb_rims.js',
-	'models/Mercedes/garage.mb_glossy_black.js',
+	var objLoader = new THREE.OBJLoader();
+	objLoader.setMaterials( materials );
+	objLoader.setPath( 'models/pony-cartoon/source/' );
+	objLoader.load( 'Pony_cartoon.obj', function ( object ) {
 
-	'models/Mercedes/garage.mb_brakes.js',
-	'models/Mercedes/garage.mb_interior.js',
-	'models/Mercedes/garage.mb_lights_glass.js',
-	'models/Mercedes/garage.mb_lights.js',
-	'models/Mercedes/garage.mb_plastic.js',
+		//object.position.y = - 95;
 
-	'models/Mercedes/garage.mb_tireFL.js',
-	'models/Mercedes/garage.mb_tireFR.js',
-
-	'models/Mercedes/garage.mb_tireRL.js',
-	'models/Mercedes/garage.mb_tireRR.js'
-
-
-];
-
-
-
-models.forEach(function(model_url) {
-    
-	loader.load(
-	// resource URL
-	model_url,
-	// Function when resource is loaded
-	function ( geometry, materials ) {
-		var material = new THREE.MeshPhongMaterial();
-		//material.color = new THREE.Color( randomColor() );
-
-		//
-
-
-
-		var object = new THREE.Mesh( geometry, material );
-
-		object.name = model_url.substring(26, model_url.length-3);
-
-		//console.log(object);
-
-		object.scale.set(scale,scale,scale);
-
-		if(object.name == 'body'){
-			material.color = new THREE.Color( 0xffffff );
-			//material.map = textureLoader.load( 'models/Mercedes/textures/body_lightmap_test.jpg' );
-			material.shininess = 100;
-		}
-
-		if(object.name == 'interior'){
-			//material.color = new THREE.Color( 0xffffff );
-			material.map = textureLoader.load( 'models/Mercedes/textures/interior_diffuse.png' );
-			material.alphaMap = textureLoader.load( 'models/Mercedes/textures/interior_diffuse.png' );
-			//material.transparent = true;
-			//m/aterial.opacity = 1;
-			//material.shininess = 100;
-		}
-
-		if(object.name == 'glass'){
-			//material.color = new THREE.Color( 0xffffff );
-			//material.map = textureLoader.load( 'models/Mercedes/textures/interior_diffuse.png' );
-			//material.shininess = 100;
-			material.transparent = true;
-			material.opacity = 0.25;
-		}
-
-		if(object.name == 'lights_glass'){
-			//material.color = new THREE.Color( 0xffffff );
-			//material.map = textureLoader.load( 'models/Mercedes/textures/interior_diffuse.png' );
-			//material.shininess = 100;
-			material.transparent = true;
-			material.opacity = 0.25;
-		}
-
-		if(object.name.substr(0,4) == 'tire') {
-			console.log('TIRE')
-			//material.color = new THREE.Color( 0xffffff );
-			material.map = textureLoader.load( 'models/Mercedes/textures/tyre_diffuse.jpg' );
-			//material.shininess = 100;
-		}
-
-		if(object.name == 'rims') {
-			console.log('RIMS')
-			//material.color = new THREE.Color( 0xffffff );
-			material.map = textureLoader.load( 'models/Mercedes/textures/tyre_diffuse.jpg' );
-			//material.shininess = 100;
-		}
-
-		if(object.name == 'brakes') {
-			console.log('BRAKES')
-			//material.color = new THREE.Color( 0xffffff );
-			material.map = textureLoader.load( 'models/Mercedes/textures/tyre_diffuse.jpg' );
-			//material.shininess = 100;
-		}
-
+		var s = 0.1;
+		object.scale.set(s,s,s)
 
 		scene.add( object );
-	}
-);
+
+	}, onProgress, onError );
 
 });
 
 
-
-
-
-
-	//scene.add(model);
-
-
-    
 
 /*
   var model;

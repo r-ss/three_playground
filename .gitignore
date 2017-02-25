@@ -22,3 +22,4 @@ build
 build.zip
 models
 *.css
+src/vendor/

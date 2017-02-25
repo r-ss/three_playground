@@ -76,7 +76,7 @@ gulp.task('browserSync', function() {
 
 gulp.task('useref', function(){
   return gulp.src([paths.html.src + '*.+(html|js)'])
-    .pipe(gulpIf('*.js', uglify()))
+    //.pipe(gulpIf('*.js', uglify()))
     .pipe(gulp.dest(paths.html.dest))
 });
 
