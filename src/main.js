@@ -24,6 +24,7 @@ window.addEventListener('load', init, false);
 function init(event){
 	createScene();
 	createLights();
+	createFloor();
 
 	loadModel();
 
@@ -33,7 +34,7 @@ function init(event){
 	loop();
 }
 
-var scene, camera, fieldOfView, aspectRatio, nearPlane, farPlane, HEIGHT, WIDTH, renderer, container;
+var scene, camera, cameraTarget, fieldOfView, aspectRatio, nearPlane, farPlane, HEIGHT, WIDTH, renderer, container;
 
 function createScene() {
 	// Get the width and the height of the screen,
@@ -60,8 +61,18 @@ function createScene() {
 		nearPlane,
 		farPlane
 		);
+
+	scene.add(camera);
 	
+	cameraTarget = new THREE.Vector3( 0, 50, 0 ); // x, y, z
+	//camera.lookAt(cameraTarget);
 	// Set the position of the camera
+	camera.position.x = 0;
+	camera.position.z = 200;
+	camera.position.y = 50;
+
+
+	//scene.add(camera)
 
 	
 	// Create the renderer
@@ -80,6 +91,11 @@ function createScene() {
 	
 	// Enable shadow rendering
 	renderer.shadowMap.enabled = true;
+	//renderer.setClearColor( 0x000000, 1 );
+	renderer.setPixelRatio( window.devicePixelRatio );
+	renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
+
+	renderer.toneMapping = THREE.LinearToneMapping; // NoToneMapping, LinearToneMapping, ReinhardToneMapping, Uncharted2ToneMapping, CineonToneMapping
 	
 	// Add the DOM element of the renderer to the 
 	// container we created in the HTML
@@ -112,11 +128,6 @@ function createScene() {
 	stats.showPanel(1); // 0: fps, 1: ms, 2: mb, 3+: custom
 	container.appendChild( stats.dom );
 
-
-
-	camera.position.x = 0;
-	camera.position.z = -290;
-	camera.position.y = 90;
 
 	
 	// Listen to the screen: if the user resizes it
@@ -174,9 +185,36 @@ function createLights() {
 	scene.add(ambientLight);
 }
 
+function createFloor(){
+	var geometry = new THREE.PlaneBufferGeometry( 1000, 1000, 1, 1 );
+	///*
+	var material = new THREE.MeshStandardMaterial( {
+		color: 0xE2E2E2,
+		metalness: 0.1
+	} );
+	var floor = new THREE.Mesh( geometry, material );
+	//*/
+
+	//var floor = new THREE.Mesh( geometry );
+	floor.material.side = THREE.DoubleSide;
+	floor.rotation.x = -Math.PI / 2
+	floor.receiveShadow = true;
+/*
+	this.floorMirror = new THREE.Mirror( this.renderer, this.camera, {
+		clipBias: 0.003,
+		textureWidth: 1024,
+		textureHeight: 1024,
+		color: 0xDDDDDD
+	} );
+
+	floor.material = this.floorMirror.material;
+	floor.add(this.floorMirror);
+	*/
+	this.scene.add( floor );
+}
 
 
-var loadModel = function() {
+function loadModel(){
 	//Manager from ThreeJs to track a loader and its status
 	var loadingManager = new THREE.LoadingManager();
 	var objLoader = new THREE.OBJLoader(loadingManager);
@@ -192,18 +230,22 @@ var loadModel = function() {
 
 	objLoader.load(url, function(object) {
 		model = object;
-		var scale = 0.5;
+		var scale = 0.3;
 		model.scale.set(scale,scale,scale);
+
+		//model.castShadow = true;
 
 		model.traverse(function(child) {
 		     if (child instanceof THREE.Mesh) {
 				child.material = baseMaterial;
+				child.castShadow = true;
+				child.receiveShadow = true;
 			}
 		});
 
 		scene.add(model);
 		model.position.x = 0;
-		model.position.y = 7.5;
+		model.position.y = 4.3;
 		model.position.z = 0;
 
 	});
