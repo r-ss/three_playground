@@ -150,11 +150,11 @@ function createLights() {
 	// A hemisphere light is a gradient colored light; 
 	// the first parameter is the sky color, the second parameter is the ground color, 
 	// the third parameter is the intensity of the light
-	hemisphereLight = new THREE.HemisphereLight(0xaaaaaa,0x000000, .8)
+	hemisphereLight = new THREE.HemisphereLight(0xaaaaaa,0x000000, .5)
 	
 	// A directional light shines from a specific direction. 
 	// It acts like the sun, that means that all the rays produced are parallel. 
-	shadowLight = new THREE.DirectionalLight(0xffffff, .6);
+	shadowLight = new THREE.DirectionalLight(0xffffff, .35);
 
 	// Set the direction of the light  
 	shadowLight.position.set(150, 350, 350);
@@ -180,7 +180,7 @@ function createLights() {
 	scene.add(shadowLight);
 
 	// an ambient light modifies the global color of a scene and makes the shadows softer
-	ambientLight = new THREE.AmbientLight(0xdc8874, .7);
+	ambientLight = new THREE.AmbientLight(0xdc8874, .6);
 	//ambientLight = new THREE.AmbientLight(0xffffff, .25);
 	scene.add(ambientLight);
 }
@@ -220,34 +220,51 @@ function loadModel(){
 	var objLoader = new THREE.OBJLoader(loadingManager);
 	var textureLoader = new THREE.TextureLoader(loadingManager);
 
-	var url = 'models/2b/source/2b.obj';
+	//var url_model = 'models/2b/source/2b.obj';
+	//var url_texture = 'models/2b/source/color_2048.jpg';
+	//var model_scale = 0.3;
+
+	var mtlLoader = new THREE.MTLLoader();
+	var mtl_url = "models/Lexus_LX_2016_obj_4wheels/input.mtl";
+
+	var url_model = 'models/Lexus_LX_2016_obj_4wheels/output.min.obj';
+	var url_texture = 'models/map.jpg';
+	var model_scale = 0.35;
+
+
 
 	var baseMaterial = new THREE.MeshPhongMaterial({
- 	 	map: textureLoader.load( 'models/2b/source/color_2048.jpg'),
+ 	 	//map: textureLoader.load(url_texture),
  	 	shading: THREE.SmoothShading,
  	 	wireframe: false
  	})
 
-	objLoader.load(url, function(object) {
-		model = object;
-		var scale = 0.3;
-		model.scale.set(scale,scale,scale);
+	mtlLoader.load( mtl_url, function( materials ) {
 
-		//model.castShadow = true;
+		objLoader.setMaterials( materials );
 
-		model.traverse(function(child) {
-		     if (child instanceof THREE.Mesh) {
-				child.material = baseMaterial;
-				child.castShadow = true;
-				child.receiveShadow = true;
-			}
+		objLoader.load(url_model, function(object) {
+			model = object;
+			model.scale.set(model_scale,model_scale,model_scale);
+
+			//model.castShadow = true;
+
+			model.traverse(function(child) {
+			     if (child instanceof THREE.Mesh) {
+					//child.material = baseMaterial;
+					child.castShadow = true;
+					child.receiveShadow = true;
+				}
+			});
+
+			scene.add(model);
+			model.position.x = 0;
+			model.position.y = 0;
+			model.position.z = 0;
+
+			//model.rotateX(-Math.PI / 2);
+
 		});
-
-		scene.add(model);
-		model.position.x = 0;
-		model.position.y = 4.3;
-		model.position.z = 0;
-
 	});
 
 };
