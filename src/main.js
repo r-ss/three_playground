@@ -13,6 +13,9 @@ var Colors = {
 
 var enable_orbitControl = true;
 
+var uniforms;
+var normalMap;
+var cleanNormalMapBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACAAQMAAAD58POIAAAAA1BMVEWAgP9QzlGcAAAAGElEQVRIx2MYBaNgFIyCUTAKRsEooDMAAAiAAAGNmLNuAAAAAElFTkSuQmCC'
 
 
 
@@ -26,15 +29,20 @@ function init(event){
 	createLights();
 	createFloor();
 
-	loadModel();
+	loadNormalMapTexture(); // Preloading texture and then model;
+
+	//loadModel();
 
 	//add the listener
 	//document.addEventListener('mousemove', handleMouseMove, false);
+
+	
 	
 	loop();
 }
 
 var scene, camera, cameraTarget, fieldOfView, aspectRatio, nearPlane, farPlane, HEIGHT, WIDTH, renderer, container;
+
 
 function createScene() {
 	// Get the width and the height of the screen,
@@ -215,10 +223,16 @@ function createFloor(){
 
 
 
+var loadingManager = new THREE.LoadingManager();
 
-function loadModel(){
+function loadNormalMapTexture(){
+	var normalMapLoader = new THREE.TextureLoader(loadingManager);
+	normalMapLoader.load(cleanNormalMapBase64, loadModel);
+}
+
+function loadModel(normalMapTexture){
 	//Manager from ThreeJs to track a loader and its status
-	var loadingManager = new THREE.LoadingManager();
+	
 	var objLoader = new THREE.OBJLoader(loadingManager);
 	var textureLoader = new THREE.TextureLoader(loadingManager);
 
@@ -226,12 +240,42 @@ function loadModel(){
 	//var url_texture = 'models/2b/source/color_2048.jpg';
 	//var model_scale = 0.3;
 
-	var mtlLoader = new THREE.MTLLoader();
-	var mtl_url = "models/Lexus_LX_2016_obj_4wheels/input.mtl";
-
 	var url_model = 'models/lexus_lx_stanislav/LX_570_naming.obj';
-	var url_texture = 'models/map.jpg';
 	var model_scale = 0.15;
+
+	// var normalMapLoader = new THREE.TextureLoader(loadingManager);
+	// normalMapLoader.load(cleanNormalMapBase64, function (texture) {
+	// 	normalMap = texture;
+	// 	//loop();
+	// });
+
+
+ 	// var normalMap = THREE.ImageUtils.loadTexture( cleanNormalMapBase64, null, function(something){
+  //      loop();
+  //    } );
+
+
+    uniforms = {
+        paintColor1: { type: "c", value: new THREE.Color('rgb(135, 135, 135)') },
+        paintColor2: { type: "c", value: new THREE.Color('rgb(75, 64, 57)') },
+        paintColor3: { type: "c", value: new THREE.Color('rgb(102, 103, 90)') },
+        normalMap: { type: "t", value: normalMapTexture},
+        normalScale: { type: "f", value: 1.0, min: 0.0, max: 1.0}
+    };
+    var vertexShader = document.getElementById('vertexShader').text;
+    var fragmentShader = document.getElementById('fragmentShader').text;
+    material = new THREE.ShaderMaterial(
+    {
+      uniforms : uniforms,
+      vertexShader : vertexShader,
+      fragmentShader : fragmentShader,
+      extensions: {
+			derivatives: true, // set to use derivatives
+			fragDepth: false, // set to use fragment depth values
+			drawBuffers: false, // set to use draw buffers
+			shaderTextureLOD: false // set to use shader texture LOD
+	  }
+    });
 
 
 
@@ -239,10 +283,11 @@ function loadModel(){
 		color: 0xe2e2e2,
  	 	shading: THREE.SmoothShading,
         shininess: 15.0,
-        ambient: 0xff0000,
         emissive: 0x050505,
         specular: 0xaaaaaa
  	})
+
+ 	var baseMaterial = material;
 
  	var tireMaterial = new THREE.MeshPhongMaterial({
  		color: 0x303030,
@@ -257,7 +302,6 @@ function loadModel(){
  	 	opacity: 0.90,
  	 	wireframe: false,
  	 	shininess: 75.0,
-        ambient: 0xff0000,
         emissive: 0x050505,
         specular: 0xbbbbbb
  	})
@@ -265,7 +309,6 @@ function loadModel(){
  	var chromeMaterial = new THREE.MeshPhongMaterial({
  		color: 0x959595,
         shininess: 100.0,
-        ambient: 0xffffff,
         emissive: 0x151515,
         specular: 0xffffff
  	})
@@ -310,6 +353,8 @@ function loadModel(){
 		});
 	//});
 
+	setupGuiControls(); // All shit is loaded, now can setup controls
+
 };
 
 
@@ -326,8 +371,47 @@ function loop(){
 	renderer.render(scene, camera);
 	requestAnimationFrame(loop);
 
+	//camera.position.z = guicontrols.cameraPositionZ;
+
 	if(enable_orbitControl){
 		controls.update(); // required if controls.enableDamping = true, or if controls.autoRotate = true
 	}
 	stats.update();
+}
+
+var guicontrols = new function() {
+ 
+}
+
+
+function setupGuiControls(){
+	var gui = new dat.GUI();
+	var uniformsFolder = gui.addFolder('Uniforms');
+
+	var ob = uniforms;
+
+
+	for(key in ob){
+      if(ob[key].type == 'f'){
+        var controller = uniformsFolder.add(ob[key], 'value').name(key);
+        if(typeof ob[key].min != 'undefined'){
+          controller = controller.min(ob[key].min).name(key);
+        }
+        if(typeof ob[key].max != 'undefined'){
+          controller = controller.max(ob[key].max).name(key);
+        }
+        controller.onChange(function(value){
+          this.object.value = parseFloat(value);
+          //render();
+         });
+      }else if(ob[key].type == 'c'){
+        ob[key].guivalue = [ob[key].value.r * 255, ob[key].value.g * 255, ob[key].value.b * 255];
+        var controller = uniformsFolder.addColor(ob[key], 'guivalue').name(key);
+        controller.onChange(function(value){
+          this.object.value.setRGB(value[0]/255, value[1]/255, value[2]/255);
+          //render();
+        });
+      }
+    }
+    uniformsFolder.open();
 }
