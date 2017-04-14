@@ -180,8 +180,8 @@ function createLights() {
 	scene.add(shadowLight);
 
 	// an ambient light modifies the global color of a scene and makes the shadows softer
-	ambientLight = new THREE.AmbientLight(0xdc8874, .6);
-	//ambientLight = new THREE.AmbientLight(0xffffff, .25);
+	//ambientLight = new THREE.AmbientLight(0xdc8874, .6);
+	ambientLight = new THREE.AmbientLight(0xffffff, .35);
 	scene.add(ambientLight);
 }
 
@@ -199,7 +199,7 @@ function createFloor(){
 	floor.material.side = THREE.DoubleSide;
 	floor.rotation.x = -Math.PI / 2
 	floor.receiveShadow = true;
-/*
+	/*
 	this.floorMirror = new THREE.Mirror( this.renderer, this.camera, {
 		clipBias: 0.003,
 		textureWidth: 1024,
@@ -212,6 +212,8 @@ function createFloor(){
 	*/
 	this.scene.add( floor );
 }
+
+
 
 
 function loadModel(){
@@ -227,21 +229,50 @@ function loadModel(){
 	var mtlLoader = new THREE.MTLLoader();
 	var mtl_url = "models/Lexus_LX_2016_obj_4wheels/input.mtl";
 
-	var url_model = 'models/Lexus_LX_2016_obj_4wheels/output.min.obj';
+	var url_model = 'models/lexus_lx_stanislav/LX_570_naming.obj';
 	var url_texture = 'models/map.jpg';
-	var model_scale = 0.35;
+	var model_scale = 0.15;
 
 
 
 	var baseMaterial = new THREE.MeshPhongMaterial({
- 	 	//map: textureLoader.load(url_texture),
+		color: 0xe2e2e2,
+ 	 	shading: THREE.SmoothShading,
+        shininess: 15.0,
+        ambient: 0xff0000,
+        emissive: 0x050505,
+        specular: 0xaaaaaa
+ 	})
+
+ 	var tireMaterial = new THREE.MeshPhongMaterial({
+ 		color: 0x303030,
  	 	shading: THREE.SmoothShading,
  	 	wireframe: false
  	})
 
-	mtlLoader.load( mtl_url, function( materials ) {
+ 	var glassMaterial = new THREE.MeshPhongMaterial({
+ 		color: 0x252525,
+ 	 	shading: THREE.SmoothShading,
+ 	 	transparent: true, 
+ 	 	opacity: 0.90,
+ 	 	wireframe: false,
+ 	 	shininess: 75.0,
+        ambient: 0xff0000,
+        emissive: 0x050505,
+        specular: 0xbbbbbb
+ 	})
 
-		objLoader.setMaterials( materials );
+ 	var chromeMaterial = new THREE.MeshPhongMaterial({
+ 		color: 0x959595,
+        shininess: 100.0,
+        ambient: 0xffffff,
+        emissive: 0x151515,
+        specular: 0xffffff
+ 	})
+
+	//mtlLoader.load( mtl_url, function( materials ) {
+
+		//objLoader.setMaterials( materials );
 
 		objLoader.load(url_model, function(object) {
 			model = object;
@@ -251,9 +282,21 @@ function loadModel(){
 
 			model.traverse(function(child) {
 			     if (child instanceof THREE.Mesh) {
-					//child.material = baseMaterial;
+			     	var name = child.name;
+
+					child.material = baseMaterial;
 					child.castShadow = true;
 					child.receiveShadow = true;
+
+					if(name.startsWith('Tire')){
+						child.material = tireMaterial;
+					}
+					if(name.startsWith('Glass')){
+						child.material = glassMaterial;
+					}
+					if(name.startsWith('Disk')){
+						child.material = chromeMaterial;
+					}
 				}
 			});
 
@@ -265,7 +308,7 @@ function loadModel(){
 			//model.rotateX(-Math.PI / 2);
 
 		});
-	});
+	//});
 
 };
 
