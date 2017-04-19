@@ -255,15 +255,56 @@ function loadModel(normalMapTexture){
   //    } );
 
 
-    uniforms = {
-        paintColor1: { type: "c", value: new THREE.Color('rgb(135, 135, 135)') },
-        paintColor2: { type: "c", value: new THREE.Color('rgb(75, 64, 57)') },
-        paintColor3: { type: "c", value: new THREE.Color('rgb(102, 103, 90)') },
+// Add skybox
+    var folder = "models/skybox-studio/"
+    // var urls = [ folder+"right.png", folder+"left.png",
+    //              folder+"up.png", folder+"down.png",
+    //              folder+"front.png", folder+"back.png" ];
+    var urls = [ folder+"front.png", folder+"front.png",
+                 folder+"front.png", folder+"front.png",
+                 folder+"front.png", folder+"front.png" ];
+    var textureCube = THREE.ImageUtils.loadTextureCube( urls );
+    // Skybox
+    var skyshader = THREE.ShaderLib[ "cube" ];
+    skyshader.uniforms[ "tCube" ].value = textureCube;
+
+    var skymaterial = new THREE.ShaderMaterial( {
+
+      fragmentShader: skyshader.fragmentShader,
+      vertexShader: skyshader.vertexShader,
+      uniforms: skyshader.uniforms,
+      depthWrite: false,
+      side: THREE.BackSide
+
+    } );
+
+    sky = new THREE.Mesh( new THREE.BoxGeometry( 1500, 1500, 1500 ), skymaterial );
+    sky.visible = false;
+    scene.add( sky );
+
+
+
+
+
+
+
+
+
+    var uniforms = {
+        paintColor1: { type: "c", value: new THREE.Color('rgb(150,150,150)') },
+        paintColor2: { type: "c", value: new THREE.Color('rgb(157,160,137)') },
+        paintColor3: { type: "c", value: new THREE.Color('rgb(114,157,180)') },
+        //paintColor1: { type: "c", value: new THREE.Color('rgb(22,25,35)') },
+        //paintColor2: { type: "c", value: new THREE.Color('rgb(0,0,0)') },
+
         normalMap: { type: "t", value: normalMapTexture},
-        normalScale: { type: "f", value: 1.0, min: 0.0, max: 1.0}
+        glossLevel: { type: "f", value: 2.2, min: 0.0, max: 5.0},
+        brightnessFactor: {type: "f", value: 0.55, min: 0.0, max: 1.0},
+        envMap: { type: "t", value: textureCube}
     };
     var vertexShader = document.getElementById('vertexShader').text;
     var fragmentShader = document.getElementById('fragmentShader').text;
+    var fragmentShaderGlass = document.getElementById('fragmentShaderGlass').text;
     material = new THREE.ShaderMaterial(
     {
       uniforms : uniforms,
@@ -277,6 +318,29 @@ function loadModel(normalMapTexture){
 	  }
     });
 
+    var uniformsGlass = {
+        paintColor1: { type: "c", value: new THREE.Color('rgb(40,40,50)') },
+        //paintColor3: { type: "c", value: new THREE.Color('rgb(114,157,180)') },
+        normalMap: { type: "t", value: normalMapTexture},
+        glossLevel: { type: "f", value: 0.1, min: 0.0, max: 5.0},
+        brightnessFactor: {type: "f", value: 0.35, min: 0.0, max: 1.0},
+        envMap: { type: "t", value: textureCube}
+    };
+
+
+    var glassMaterial = new THREE.ShaderMaterial(
+    {
+      uniforms : uniformsGlass,
+      vertexShader : vertexShader,
+      fragmentShader : fragmentShaderGlass,
+      extensions: {
+			derivatives: true, // set to use derivatives
+			fragDepth: false, // set to use fragment depth values
+			drawBuffers: false, // set to use draw buffers
+			shaderTextureLOD: false // set to use shader texture LOD
+	  },
+	  transparent: true
+    });
 
 
 	var baseMaterial = new THREE.MeshPhongMaterial({
@@ -294,7 +358,7 @@ function loadModel(normalMapTexture){
  	 	shading: THREE.SmoothShading,
  	 	wireframe: false
  	})
-
+/*
  	var glassMaterial = new THREE.MeshPhongMaterial({
  		color: 0x252525,
  	 	shading: THREE.SmoothShading,
@@ -305,6 +369,7 @@ function loadModel(normalMapTexture){
         emissive: 0x050505,
         specular: 0xbbbbbb
  	})
+ 	*/
 
  	var chromeMaterial = new THREE.MeshPhongMaterial({
  		color: 0x959595,
@@ -353,7 +418,7 @@ function loadModel(normalMapTexture){
 		});
 	//});
 
-	setupGuiControls(); // All shit is loaded, now can setup controls
+	setupGuiControls(uniforms); // All shit is loaded, now can setup controls
 
 };
 
@@ -384,14 +449,16 @@ var guicontrols = new function() {
 }
 
 
-function setupGuiControls(){
+function setupGuiControls(ob){
 	var gui = new dat.GUI();
-	var uniformsFolder = gui.addFolder('Uniforms');
-
-	var ob = uniforms;
-
-
-	for(key in ob){
+	var sceneFolder = gui.addFolder('Scene');
+	//var ob = uniforms;
+    //var geoController = sceneFolder.add({Geometry:"box"}, 'Geometry', [ 'box', 'sphere', 'torusknot' ] );
+    //geoController.onChange(changeGeometry);
+    sceneFolder.add(sky, 'visible').name('Show Cubemap').onChange(function(){render();});
+    sceneFolder.open();
+    var uniformsFolder = gui.addFolder('Uniforms');
+    for(key in ob){
       if(ob[key].type == 'f'){
         var controller = uniformsFolder.add(ob[key], 'value').name(key);
         if(typeof ob[key].min != 'undefined'){
@@ -402,14 +469,14 @@ function setupGuiControls(){
         }
         controller.onChange(function(value){
           this.object.value = parseFloat(value);
-          //render();
+          //loop();
          });
       }else if(ob[key].type == 'c'){
         ob[key].guivalue = [ob[key].value.r * 255, ob[key].value.g * 255, ob[key].value.b * 255];
         var controller = uniformsFolder.addColor(ob[key], 'guivalue').name(key);
         controller.onChange(function(value){
           this.object.value.setRGB(value[0]/255, value[1]/255, value[2]/255);
-          //render();
+          //loop();
         });
       }
     }
